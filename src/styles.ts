@@ -1,0 +1,27 @@
+import { createGlobalStyle } from 'styled-components';
+
+export const GlobalStyle = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+
+  :root {
+    font-family: 'DM Sans', 'Noto Sans KR', sans-serif;
+    color: #17211b;
+    background: #f3f1e9;
+    font-synthesis: none;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+  }
+`;
