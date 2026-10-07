@@ -21,6 +21,14 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Load production config
+        run: |
+          echo "VITE_API_BASE_URL=$(aws ssm get-parameter \
+            --name '/chokokane/prod/client/api-base-url' \
+            --query 'Parameter.Value' \
+            --output test)" >> "$GITHUB_ENV"
+          )"
+
       - name: Build production
         run: yarn build:prod
 
