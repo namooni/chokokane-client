@@ -12,7 +12,7 @@ export const ExpenseLayout = ({ children }: ExpenseLayoutProps) => {
       <Topbar>
         <Brand>
           <BrandMark>¥</BrandMark>
-          <span>Moneylog</span>
+          <span>ちょこかね</span>
         </Brand>
         <TopbarActions>
           <DateLabel>MY EXPENSE BOOK</DateLabel>
@@ -22,7 +22,7 @@ export const ExpenseLayout = ({ children }: ExpenseLayoutProps) => {
         </TopbarActions>
       </Topbar>
       {children}
-      <Footer>Moneylog · React + Spring Boot + MyBatis</Footer>
+      <Footer>ちょこかね · React + Spring Boot + MyBatis</Footer>
     </PageShell>
   );
 };

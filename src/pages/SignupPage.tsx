@@ -43,7 +43,7 @@ export const SignupPage = () => {
       <Topbar>
         <Brand to="/">
           <BrandMark>¥</BrandMark>
-          <span>Moneylog</span>
+          <span>ちょこかね</span>
         </Brand>
         <BackLink to="/">トップへ戻る</BackLink>
       </Topbar>
@@ -108,7 +108,7 @@ export const SignupPage = () => {
           </LoginPrompt>
         </SignupForm>
       </SignupRegion>
-      <Footer>Moneylog · あなたの毎日に寄り添う家計簿</Footer>
+      <Footer>ちょこかね · あなたの毎日に寄り添う家計簿</Footer>
     </Page>
   );
 };

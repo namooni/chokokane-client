@@ -12,7 +12,7 @@ export const LandingPage = () => (
     <Topbar>
       <Brand to="/">
         <BrandMark>¥</BrandMark>
-        <span>Moneylog</span>
+        <span>ちょこかね</span>
       </Brand>
       <TopActions>
         <LoginLink to="/login">ログイン</LoginLink>
@@ -25,7 +25,7 @@ export const LandingPage = () => (
     <Hero>
       <HeroInner>
         <HeroEyebrow>YOUR DAILY MONEY, IN FOCUS</HeroEyebrow>
-        <HeroTitle>Moneylog</HeroTitle>
+        <HeroTitle>ちょこかね</HeroTitle>
         <HeroCopy>毎日の支出を、無理なく見える化。</HeroCopy>
         <HeroDescription>
           使ったお金を記録するだけ。日々の流れが見えて、次の選択が少し楽になります。
@@ -87,7 +87,7 @@ export const LandingPage = () => (
       </PreviewFooter>
     </PreviewSection>
     <PageFooter>
-      <span>Moneylog</span>
+      <span>ちょこかね</span>
       <span>あなたの毎日に寄り添う家計簿</span>
     </PageFooter>
   </Page>

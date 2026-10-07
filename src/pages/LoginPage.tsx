@@ -47,7 +47,7 @@ export const LoginPage = () => {
       <Topbar>
         <Brand to="/">
           <BrandMark>¥</BrandMark>
-          <span>Moneylog</span>
+          <span>ちょこかね</span>
         </Brand>
         <BackLink to="/">トップへ戻る</BackLink>
       </Topbar>
@@ -96,7 +96,7 @@ export const LoginPage = () => {
           </SignupPrompt>
         </LoginForm>
       </LoginRegion>
-      <Footer>Moneylog · あなたの毎日に寄り添う家計簿</Footer>
+      <Footer>ちょこかね · あなたの毎日に寄り添う家計簿</Footer>
     </Page>
   );
 };
