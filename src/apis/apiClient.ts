@@ -9,14 +9,16 @@ import {
   saveAccessToken,
 } from '../auth/tokenStorage';
 
+const baseURL = import.meta.env.VITE_API_BASE_URL;
+
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: baseURL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
 const refreshClient = axios.create({
-  baseURL: '/api',
+  baseURL: baseURL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });

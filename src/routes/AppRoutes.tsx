@@ -4,6 +4,7 @@ import { ExpensePage } from '../pages/ExpensePage';
 import { LandingPage } from '../pages/LandingPage';
 import { LoginPage } from '../pages/LoginPage';
 import { SignupPage } from '../pages/SignupPage';
+import NotFoundRedirect from './NotFoundRedirect';
 
 export const AppRoutes = () => (
   <BrowserRouter>
@@ -14,7 +15,7 @@ export const AppRoutes = () => (
       <Route element={<ProtectedRoute />}>
         <Route path="/app" element={<ExpensePage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundRedirect />} />
     </Routes>
   </BrowserRouter>
 );
