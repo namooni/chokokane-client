@@ -20,10 +20,10 @@ export const LoginPage = () => {
     requestedPath.startsWith('/') &&
     !requestedPath.startsWith('//')
       ? requestedPath
-      : '/app';
+      : '/home';
 
   if (isAuthenticated) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
