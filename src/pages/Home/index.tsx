@@ -2,8 +2,12 @@ import styled from 'styled-components';
 import { FlexBox, Text } from '../../components';
 import { colors } from '../../theme/palette';
 import Card from '../../components/Card';
+import { useExpenses } from '../../hooks/useExpenses';
 
 const HomePage = () => {
+  const { expenses } = useExpenses();
+
+  console.log({ expenses });
   return (
     <HomeContainer>
       <DateSelector>
@@ -57,38 +61,24 @@ const HomePage = () => {
           <RecetMore>すべて見る {'->'}</RecetMore>
         </RecentHeader>
 
-        <RecentItem>
-          <RecentCategoryCard />
-          <RecentTextWrap>
-            <RecentItemTitle>コンビニ</RecentItemTitle>
-            <RecentItemSubtitle>食費 · 10/7</RecentItemSubtitle>
-          </RecentTextWrap>
-          <RecentAmount>−¥430</RecentAmount>
-        </RecentItem>
-        <RecentItem>
-          <RecentCategoryCard />
-          <RecentTextWrap>
-            <RecentItemTitle>コンビニ</RecentItemTitle>
-            <RecentItemSubtitle>食費 · 10/7</RecentItemSubtitle>
-          </RecentTextWrap>
-          <RecentAmount>−¥430</RecentAmount>
-        </RecentItem>
-        <RecentItem>
-          <RecentCategoryCard />
-          <RecentTextWrap>
-            <RecentItemTitle>コンビニ</RecentItemTitle>
-            <RecentItemSubtitle>食費 · 10/7</RecentItemSubtitle>
-          </RecentTextWrap>
-          <RecentAmount>−¥430</RecentAmount>
-        </RecentItem>
-        <RecentItem>
-          <RecentCategoryCard />
-          <RecentTextWrap>
-            <RecentItemTitle>コンビニ</RecentItemTitle>
-            <RecentItemSubtitle>食費 · 10/7</RecentItemSubtitle>
-          </RecentTextWrap>
-          <RecentAmount>−¥430</RecentAmount>
-        </RecentItem>
+        {expenses.pagination.content.map((item, index) => {
+          const dateTimeStr = item.createdAt;
+          const [_, month, day] = dateTimeStr.split('T')[0].split('-');
+          const date = `${month}/${day}`;
+          if (index === 5) return;
+          return (
+            <RecentItem>
+              <RecentCategoryCard color={item.category.color} />
+              <RecentTextWrap>
+                <RecentItemTitle>{item.memo ?? '-'}</RecentItemTitle>
+                <RecentItemSubtitle>
+                  {item.category.name} · {date}
+                </RecentItemSubtitle>
+              </RecentTextWrap>
+              <RecentAmount>−¥{item.amount}</RecentAmount>
+            </RecentItem>
+          );
+        })}
       </RecentWrap>
     </HomeContainer>
   );
@@ -209,10 +199,10 @@ const RecentItem = styled(FlexBox).attrs({
   align: 'center',
 })``;
 
-const RecentCategoryCard = styled.div`
+const RecentCategoryCard = styled.div<{ color: string }>`
   width: 36px;
   height: 36px;
-  background-color: ${colors.categoryFood};
+  background-color: ${({ color }) => color};
   opacity: 0.2;
   border-radius: 10px;
 `;
