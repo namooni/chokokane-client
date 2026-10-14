@@ -26,7 +26,7 @@ export const ExpenseListPanel = ({
   selectedSort,
   onPageChange,
 }: ExpenseListPanelProps) => {
-  const content = expenses.content;
+  const content = expenses.pagination.content;
 
   return (
     <ListCard>
@@ -35,7 +35,7 @@ export const ExpenseListPanel = ({
           <SectionEyebrow>HISTORY</SectionEyebrow>
           <SectionTitle>最近の支出</SectionTitle>
         </SectionHeading>
-        <RecordCount>{expenses.totalElements} records</RecordCount>
+        <RecordCount>{expenses.pagination.totalElements} records</RecordCount>
         <SortWrap>
           <Sort value={selectedSort} onChange={sort}>
             {sortItems.map((item) => (
@@ -60,13 +60,13 @@ export const ExpenseListPanel = ({
           {content.map((expense) => (
             <ExpenseRow key={expense.id}>
               <CategoryIcon>
-                {expense.category.slice(0, 1).toUpperCase()}
+                {expense.category.name.slice(0, 1).toUpperCase()}
               </CategoryIcon>
               <ExpenseMain>
                 <ExpenseDetails>
                   <ExpenseMemo>{expense.memo || 'No memo'}</ExpenseMemo>
                   <ExpenseMeta>
-                    {expense.category} · #{expense.id}
+                    {expense.category.name} · #{expense.id}
                   </ExpenseMeta>
                 </ExpenseDetails>
                 <ExpenseSub>
@@ -92,8 +92,8 @@ export const ExpenseListPanel = ({
         </ExpenseList>
       )}
       <Pagination
-        pageCount={expenses.totalPages}
-        currentPage={expenses.page}
+        pageCount={expenses.pagination.totalPages}
+        currentPage={expenses.pagination.page}
         onPageChange={onPageChange}
       />
     </ListCard>

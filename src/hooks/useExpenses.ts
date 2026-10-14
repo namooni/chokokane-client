@@ -53,21 +53,19 @@ export const useExpenses = () => {
 
   const submit = async (event: SubmitEvent) => {
     event.preventDefault();
-    if (form.amount <= 0 || !form.category.trim()) return;
+
+    if (form.amount <= 0 || form.categoryId <= 0) return;
 
     try {
+      setError('');
+
       if (editingId === null) {
         await expenseRepository.create(form);
-        await loadExpenses();
       } else {
-        const updated = await expenseRepository.update(editingId, form);
-        setExpenses((previous) => ({
-          ...previous,
-          content: previous.content.map((expense) =>
-            expense.id === editingId ? updated : expense,
-          ),
-        }));
+        await expenseRepository.update(editingId, form);
       }
+
+      await loadExpenses();
       cancelEdit();
     } catch {
       setError('保存に失敗しました。APIの状態を確認してください。');
@@ -76,14 +74,14 @@ export const useExpenses = () => {
 
   const startEdit = (expense: ExpenseContent) => {
     setEditingId(expense.id);
+
     setForm({
       amount: expense.amount,
-      category: expense.category,
-      memo: expense.memo,
+      categoryId: expense.category.id,
+      memo: expense.memo ?? '',
       expenseDate: expense.expenseDate,
       expenseTime: expense.expenseTime,
     });
-    // window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const remove = async (id: number) => {

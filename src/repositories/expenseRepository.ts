@@ -1,9 +1,13 @@
-import { AxiosRequestConfig } from 'axios';
 import { api } from '../apis/apiClient';
-import { Expense, ExpenseContent, ExpenseRequest, Sort } from '../util/expense';
+import type {
+  Expense,
+  ExpenseRequest,
+  Sort,
+  ExpenseMutationResponse,
+} from '../util/expense';
 
 export type ExpenseFilterParams = {
-  categories?: string[];
+  categoryIds?: number[];
   minAmount?: number;
   maxAmount?: number;
   sort?: Sort;
@@ -12,30 +16,28 @@ export type ExpenseFilterParams = {
 };
 
 export const expenseRepository = {
-  getAll: (params?: ExpenseFilterParams) => {
-    const options: AxiosRequestConfig = {};
-
-    if (params) {
-      options.params = {
+  getAll: (params?: ExpenseFilterParams) =>
+    api<Expense>('/expenses', {
+      params: {
         ...params,
-        categories: params.categories?.join(','),
-      };
-    }
+        categoryIds: params?.categoryIds?.join(','),
+      },
+    }),
 
-    return api<Expense>('/expenses', options);
-  },
-  create: async (expense: ExpenseRequest) => {
-    const expenses = await api<ExpenseContent>('/expenses', {
+  create: (expense: ExpenseRequest) =>
+    api<ExpenseMutationResponse>('/expenses', {
       method: 'POST',
       data: expense,
-    });
+    }),
 
-    return expenses;
-  },
   update: (id: number, expense: ExpenseRequest) =>
-    api<ExpenseContent>(`/expenses/${id}`, {
+    api<ExpenseMutationResponse>(`/expenses/${id}`, {
       method: 'PUT',
       data: expense,
     }),
-  remove: (id: number) => api<void>(`/expenses/${id}`, { method: 'DELETE' }),
+
+  remove: (id: number) =>
+    api<void>(`/expenses/${id}`, {
+      method: 'DELETE',
+    }),
 };

@@ -17,9 +17,11 @@ import AppFrame from '../layouts/AppFrame';
 export const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
-      <Route path={paths.LANDING} element={<LandingPage />} />
-      <Route path={paths.LOGIN} element={<LoginPage />} />
-      <Route path={paths.SIGN_UP} element={<SignupPage />} />
+      <Route element={<AppFrame />}>
+        <Route path={paths.LANDING} element={<LandingPage />} />
+        <Route path={paths.LOGIN} element={<LoginPage />} />
+        <Route path={paths.SIGN_UP} element={<SignupPage />} />
+      </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<AppFrame />}>
           {/* 상단 헤더 + Bottom Nav 있음 */}
