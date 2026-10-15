@@ -10,11 +10,12 @@ type SelectInputProps = {
   value: string;
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   children: ReactNode;
+  disabled?: boolean;
 };
 
-const SelectInput = ({ value, onChange, children }: SelectInputProps) => {
+const SelectInput = ({ value, onChange, children, disabled }: SelectInputProps) => {
   return (
-    <Select value={value} onChange={(event) => onChange(event)}>
+    <Select value={value} onChange={onChange} disabled={disabled}>
       {children}
     </Select>
   );

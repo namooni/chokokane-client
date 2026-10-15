@@ -1,5 +1,3 @@
-﻿import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import {
   Page,
   Topbar,
@@ -18,42 +16,22 @@ import {
   ActionLink as LoginLink,
   Footer,
 } from './authStyles';
-import { api } from '../apis/apiClient';
+import { useSignupForm } from '../hooks/auth/useSignupForm';
 
 export const SignupPage = () => {
-  const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError('');
-
-    if (password !== passwordConfirmation) {
-      setError('パスワードが一致しません。');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await api('/signup', {
-        method: 'POST',
-        data: { name, email, password },
-      });
-      navigate('/login', {
-        replace: true,
-        state: { signupComplete: true, email },
-      });
-    } catch {
-      setError('登録できませんでした。入力内容をご確認ください。');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const {
+    name,
+    setName,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    passwordConfirmation,
+    setPasswordConfirmation,
+    error,
+    submitting,
+    submit,
+  } = useSignupForm();
 
   return (
     <Page>

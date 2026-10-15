@@ -16,8 +16,16 @@ type Props = {
   onCreated: (category: Category) => void;
 };
 export const QuickCategorySheet = ({ onClose, onCreate, onCreated }: Props) => {
-  const { name, setName, color, setColor, error, saving, submit } =
-    useCategorySheet({ onCreate, onCreated });
+  const {
+    name,
+    setName,
+    color,
+    setColor,
+    error,
+    saving,
+    submit,
+    saveDisabled,
+  } = useCategorySheet({ onCreate, onCreated });
 
   return (
     <BottomSheet title="カテゴリーを追加" onClose={onClose}>
@@ -64,11 +72,7 @@ export const QuickCategorySheet = ({ onClose, onCreate, onCreated }: Props) => {
           {error}
         </Text>
       )}
-      <PrimaryButton
-        type="button"
-        disabled={!name.trim() || saving}
-        onClick={submit}
-      >
+      <PrimaryButton type="button" disabled={saveDisabled} onClick={submit}>
         {saving ? '作成中...' : '作成して選択'}
       </PrimaryButton>
     </BottomSheet>

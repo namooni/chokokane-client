@@ -27,5 +27,14 @@ export const useCategorySheet = ({ onCreate, onCreated }: Props) => {
       setSaving(false);
     }
   };
-  return { name, setName, color, setColor, error, saving, submit };
+  return {
+    name,
+    setName,
+    color,
+    setColor,
+    error,
+    saving,
+    submit,
+    saveDisabled: !name.trim() || saving,
+  };
 };
