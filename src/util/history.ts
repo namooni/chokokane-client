@@ -1,5 +1,23 @@
 import type { ExpenseContent } from './expense';
 
+export const appendHistoryItems = (
+  previous: ExpenseContent[],
+  incoming: ExpenseContent[],
+) => [
+  ...new Map(
+    [...previous, ...incoming].map((item) => [item.id, item]),
+  ).values(),
+];
+
+export const groupHistoryItems = (items: ExpenseContent[]) => {
+  const groups = new Map<string, ExpenseContent[]>();
+  items.forEach((item) => {
+    const date = item.expenseDate ?? 'undated';
+    groups.set(date, [...(groups.get(date) ?? []), item]);
+  });
+  return [...groups];
+};
+
 export const expenseMonth = (expense: ExpenseContent) => {
   if (expense.expenseDate) return expense.expenseDate.slice(0, 7);
   // LocalDateTime from the server represents UTC; offset timestamps retain their offset.

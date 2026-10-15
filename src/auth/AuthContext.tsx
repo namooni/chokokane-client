@@ -12,7 +12,7 @@ type LoginCredentials = { email: string; password: string };
 type AuthContextValue = {
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);

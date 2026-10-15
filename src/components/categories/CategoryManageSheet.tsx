@@ -5,8 +5,10 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { Text } from '../Text';
 import { colors } from '../../theme/palette';
 import { CategoryEditSheet } from './CategoryEditSheet';
+import { TextAction } from '../ui/FormControls';
 
 type Props = {
+  onAdd?: () => void;
   categories: Category[];
   onClose: () => void;
   onDelete: (categoryId: number) => Promise<void>;
@@ -23,6 +25,7 @@ export const CategoryManageSheet = ({
   onDelete,
   onDeleted,
   onUpdate,
+  onAdd,
 }: Props) => {
   const {
     deleteTarget,
@@ -55,6 +58,12 @@ export const CategoryManageSheet = ({
           ✕
         </Close>
       </Header>
+
+      {onAdd && (
+        <TextAction type="button" onClick={onAdd} disabled={deleting}>
+          ＋ カテゴリーを追加
+        </TextAction>
+      )}
 
       {categories.map((category) => (
         <CategoryRow key={category.id}>
