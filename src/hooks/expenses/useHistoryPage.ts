@@ -1,79 +1,83 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useHistory } from './useHistory';
-import { expenseMonth, sortHistory } from '../../util/history';
 import { getTodayJST } from '../../util/date';
 import type { ExpenseContent } from '../../util/expense';
+import { groupHistoryItems } from '../../util/history';
+
 export const useHistoryPage = () => {
-  const { items, loading, error, reload } = useHistory();
-  const [month, setMonth] = useState(() => getTodayJST().slice(0, 7));
-  const [filter, setFilter] = useState('all');
-  const [limit, setLimit] = useState(20);
+  const [searchParams] = useSearchParams();
+  const [month, setMonth] = useState(() => {
+    const requested = searchParams.get('month') ?? '';
+    return /^\d{4}-(0[1-9]|1[0-2])$/.test(requested) &&
+      requested >= '0001-01' &&
+      requested <= getTodayJST().slice(0, 7)
+      ? requested
+      : getTodayJST().slice(0, 7);
+  });
+  const [filter, setFilter] = useState(() => {
+    const requested = searchParams.get('categoryId') ?? '';
+    return /^[1-9]\d*$/.test(requested) ? requested : 'all';
+  });
+  const history = useHistory(month, filter);
+  const {
+    data,
+    items,
+    loading,
+    error,
+    reload,
+    loadingMore,
+    moreError,
+    loadMore,
+  } = history;
   const [editing, setEditing] = useState<ExpenseContent | null>(null);
   const [toast, setToast] = useState('');
-  const monthly = sortHistory(
-    items.filter((item) => expenseMonth(item) === month),
-  );
-  const categories = [
-    ...new Map(
-      monthly.map((item) => [item.category.id, item.category]),
-    ).values(),
-  ];
-  const effective =
-    filter === 'all' ||
-    filter === 'undated' ||
-    categories.some((item) => String(item.id) === filter)
-      ? filter
-      : 'all';
-  const filtered = monthly.filter(
-    (item) =>
-      effective === 'all' ||
-      (effective === 'undated'
-        ? !item.expenseDate
-        : String(item.category.id) === effective),
-  );
-  const groups = new Map<string, ExpenseContent[]>();
-  filtered.slice(0, limit).forEach((item) => {
-    const key = item.expenseDate ?? 'undated';
-    groups.set(key, [...(groups.get(key) ?? []), item]);
-  });
+  const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null);
+  const categories = data?.availableCategories ?? [];
+  const hasMore = data?.hasNext ?? false;
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
   useEffect(() => {
-    if (!loading) setFilter(effective);
-  }, [effective, loading]);
+    if (
+      !loading &&
+      !error &&
+      data &&
+      filter !== 'all' &&
+      filter !== 'undated' &&
+      !data.availableCategories.some((item) => String(item.id) === filter)
+    )
+      setFilter('all');
+  }, [data, loading, error, filter]);
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(''), 3000);
     return () => window.clearTimeout(timer);
   }, [toast]);
+  useEffect(() => {
+    if (!sentinel || !hasMore || loading || loadingMore || moreError || editing)
+      return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+      },
+      { rootMargin: '0px 0px 200px 0px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [sentinel, hasMore, loading, loadingMore, moreError, editing, loadMore]);
+
   const move = (offset: number) => {
     const [year, number] = month.split('-').map(Number);
-    setMonth(
-      new Date(Date.UTC(year, number - 1 + offset, 1))
-        .toISOString()
-        .slice(0, 7),
-    );
-    setLimit(20);
+    const next = new Date(Date.UTC(year, number - 1 + offset, 1))
+      .toISOString()
+      .slice(0, 7);
+    if (next > getTodayJST().slice(0, 7)) return;
+    setMonth(next);
   };
+  const groups = groupHistoryItems(items);
   const [year, number] = month.split('-').map(Number);
-  const monthlyTotal = monthly.reduce((sum, item) => sum + item.amount, 0);
-  const filteredTotal = filtered.reduce((sum, item) => sum + item.amount, 0);
-  const filterOptions = [
-    { id: 'all', name: 'すべて' },
-    ...categories.map((item) => ({ id: String(item.id), name: item.name })),
-    { id: 'undated', name: '日付未設定' },
-  ];
-  const selectFilter = (id: string) => {
-    setFilter(id);
-    setLimit(20);
-  };
-  const onSaved = (message: string) => {
-    setEditing(null);
-    setToast(message);
-    setLimit(20);
-    reload();
-  };
   return {
     loading,
     error,
@@ -81,20 +85,32 @@ export const useHistoryPage = () => {
     year,
     number,
     move,
-    effective,
-    filterOptions,
-    selectFilter,
-    monthlyTotal,
-    filteredTotal,
-    hasMonthly: monthly.length > 0,
-    filteredCount: filtered.length,
-    groups: [...groups],
-    hasMore: filtered.length > limit,
-    showMore: () => setLimit((value) => value + 20),
+    effective: filter,
+    filterOptions: [
+      { id: 'all', name: 'すべて' },
+      ...categories.map((item) => ({ id: String(item.id), name: item.name })),
+      { id: 'undated', name: '日付未設定' },
+    ],
+    selectFilter: (id: string) => setFilter(id),
+    monthlyTotal: data?.monthlyTotal ?? 0,
+    filteredTotal: data?.filteredTotal ?? 0,
+    hasMonthly: categories.length > 0,
+    filteredCount: items.length,
+    groups,
+    hasMore,
+    loadingMore,
+    moreError,
+    retryMore: loadMore,
+    sentinelRef: setSentinel,
     editing,
     startEdit: setEditing,
     closeEdit: () => setEditing(null),
-    onSaved,
+    onSaved: (message: string) => {
+      setEditing(null);
+      setToast(message);
+      reload();
+      window.scrollTo(0, 0);
+    },
     toast,
     dismissToast: () => setToast(''),
     isCurrentMonth: month === getTodayJST().slice(0, 7),

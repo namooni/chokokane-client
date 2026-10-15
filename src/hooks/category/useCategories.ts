@@ -11,9 +11,12 @@ export const useCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setError('');
     categoryApi
       .list()
       .then((data) => {
@@ -28,7 +31,7 @@ export const useCategories = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [revision]);
 
   const createCategory = async (input: CreateCategoryInput) => {
     const name = normalizeCategoryName(input.name);
@@ -107,6 +110,7 @@ export const useCategories = () => {
   };
 
   return {
+    reload: () => setRevision((value) => value + 1),
     categories,
     loading,
     error,
