@@ -29,6 +29,11 @@ type RetriableRequestConfig = InternalAxiosRequestConfig & {
 
 let refreshPromise: Promise<string> | null = null;
 
+const isPublicAuthRequest = (url: string = '') => {
+  const pathname = url.split(/[?#]/, 1)[0].replace(/\/+$/, '');
+  return /\/(login|signup|refresh)$/.test(pathname);
+};
+
 const refreshAccessToken = () => {
   if (!refreshPromise) {
     refreshPromise = refreshClient
@@ -52,6 +57,10 @@ const refreshAccessToken = () => {
 };
 
 apiClient.interceptors.request.use((config) => {
+  if (isPublicAuthRequest(config.url)) {
+    config.headers.delete('Authorization');
+    return config;
+  }
   const accessToken = getAccessToken();
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -64,7 +73,7 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const request = error.config as RetriableRequestConfig | undefined;
     const requestUrl = request?.url ?? '';
-    const isAuthRequest = /\/(login|refresh)$/.test(requestUrl);
+    const isAuthRequest = isPublicAuthRequest(requestUrl);
 
     if (
       error.response?.status !== 401 ||
