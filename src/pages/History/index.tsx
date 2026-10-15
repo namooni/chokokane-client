@@ -22,7 +22,10 @@ const HistoryPage = () => {
     filteredCount,
     groups,
     hasMore,
-    showMore,
+    loadingMore,
+    moreError,
+    retryMore,
+    sentinelRef,
     editing,
     startEdit,
     closeEdit,
@@ -110,9 +113,7 @@ const HistoryPage = () => {
             </Filters>
           )}
           {effective !== 'all' && (
-            <Muted>
-              {filteredCount}件 · 合計 {yen.format(filteredTotal)}
-            </Muted>
+            <Muted>絞り込み合計 {yen.format(filteredTotal)}</Muted>
           )}
           {!filteredCount ? (
             <State>
@@ -167,7 +168,21 @@ const HistoryPage = () => {
               </section>
             ))
           )}
-          {hasMore && <Chip onClick={showMore}>もっと見る</Chip>}
+          {moreError && (
+            <State role="alert">
+              <p>{moreError}</p>
+              <Chip onClick={retryMore} disabled={loadingMore}>
+                再読み込み
+              </Chip>
+            </State>
+          )}
+          {hasMore && <ScrollSentinel ref={sentinelRef} aria-hidden="true" />}
+          {loadingMore && (
+            <ScrollStatus role="status">続きを読み込み中...</ScrollStatus>
+          )}
+          {!hasMore && filteredCount > 0 && (
+            <ScrollStatus>すべての支出を表示しました</ScrollStatus>
+          )}
         </>
       )}
       {editing && (
@@ -191,6 +206,16 @@ const Page = styled.div`
   flex-direction: column;
   gap: 20px;
   padding-top: 16px;
+`;
+const ScrollSentinel = styled.div`
+  height: 1px;
+`;
+const ScrollStatus = styled.p`
+  margin: 0;
+  padding: 12px;
+  text-align: center;
+  color: ${colors.textMuted};
+  font-size: 12px;
 `;
 const MonthNav = styled.nav`
   display: flex;

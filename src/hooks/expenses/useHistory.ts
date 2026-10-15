@@ -1,54 +1,128 @@
-import { useEffect, useState } from 'react';
-import { expenseRepository } from '../../repositories/expenseRepository';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  historyApi,
+  type HistoryResponse,
+} from '../../apis/history/historyApi';
 import type { ExpenseContent } from '../../util/expense';
+import { appendHistoryItems } from '../../util/history';
 
-// Compatibility adapter until the server exposes month filters and cursors.
-export const useHistory = () => {
-  const [items, setItems] = useState<ExpenseContent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+type Snapshot = {
+  key: string;
+  data: HistoryResponse | null;
+  items: ExpenseContent[];
+  loading: boolean;
+  loadingMore: boolean;
+  error: string;
+  moreError: string;
+};
+const empty = (key: string): Snapshot => ({
+  key,
+  data: null,
+  items: [],
+  loading: true,
+  loadingMore: false,
+  error: '',
+  moreError: '',
+});
+
+export const useHistory = (month: string, filter: string) => {
   const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      setLoading(true);
-      setError('');
+  const key = `${month}|${filter}|${revision}`;
+  const [snapshot, setSnapshot] = useState<Snapshot>(() => empty(key));
+  const snapshotRef = useRef(snapshot);
+  const pending = useRef<AbortController | null>(null);
+  const publish = useCallback((next: Snapshot) => {
+    snapshotRef.current = next;
+    setSnapshot(next);
+  }, []);
+
+  const fetchPage = useCallback(
+    async (cursor?: string) => {
+      if (pending.current) return;
+      const previous = snapshotRef.current;
+      if (cursor && previous.key !== key) return;
+      const controller = new AbortController();
+      pending.current = controller;
+      publish(
+        cursor ? { ...previous, loadingMore: true, moreError: '' } : empty(key),
+      );
       try {
-        const first = await expenseRepository.getAll({
-          page: 0,
-          size: 100,
-          sort: 'latest',
+        const data = await historyApi.list(
+          {
+            month,
+            size: 20,
+            categoryId:
+              filter !== 'all' && filter !== 'undated'
+                ? Number(filter)
+                : undefined,
+            undated: filter === 'undated',
+            cursor,
+          },
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        if (data.hasNext && (!data.nextCursor || data.nextCursor === cursor))
+          throw new Error('Invalid history cursor');
+        const items = appendHistoryItems(
+          cursor ? previous.items : [],
+          data.content,
+        );
+        publish({
+          key,
+          data,
+          items,
+          loading: false,
+          loadingMore: false,
+          error: '',
+          moreError: '',
         });
-        const result = [...first.pagination.content];
-        for (let page = 1; page < first.pagination.totalPages; page++) {
-          if (!active) return;
-          const next = await expenseRepository.getAll({
-            page,
-            size: 100,
-            sort: 'latest',
-          });
-          result.push(...next.pagination.content);
-        }
-        if (active)
-          setItems([
-            ...new Map(result.map((item) => [item.id, item])).values(),
-          ]);
       } catch {
-        if (active)
-          setError('支出履歴を読み込めませんでした。もう一度お試しください。');
+        if (controller.signal.aborted) return;
+        if (cursor)
+          publish({
+            ...previous,
+            loadingMore: false,
+            moreError: '続きの支出を読み込めませんでした。',
+          });
+        else
+          publish({
+            ...empty(key),
+            loading: false,
+            error: '支出履歴を読み込めませんでした。もう一度お試しください。',
+          });
       } finally {
-        if (active) setLoading(false);
+        if (pending.current === controller) pending.current = null;
       }
-    };
-    void load();
+    },
+    [month, filter, key, publish],
+  );
+
+  useEffect(() => {
+    pending.current?.abort();
+    pending.current = null;
+    void fetchPage();
     return () => {
-      active = false;
+      pending.current?.abort();
+      pending.current = null;
     };
-  }, [revision]);
+  }, [fetchPage]);
+
+  const loadMore = useCallback(() => {
+    const current = snapshotRef.current;
+    if (
+      current.key !== key ||
+      current.loading ||
+      current.loadingMore ||
+      !current.data?.hasNext ||
+      !current.data.nextCursor
+    )
+      return;
+    void fetchPage(current.data.nextCursor);
+  }, [key, fetchPage]);
+
   return {
-    items,
-    loading,
-    error,
+    ...(snapshot.key === key ? snapshot : empty(key)),
+    loadMore,
     reload: () => setRevision((value) => value + 1),
   };
 };

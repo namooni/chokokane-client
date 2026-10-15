@@ -24,17 +24,42 @@ export const BudgetEditSheet = (props: BudgetFormProps) => {
         </Close>
       </Header>
       <Note>予算は月ごとに設定します。</Note>
+      {props.allowMonthChange && (
+        <MonthField>
+          予算を設定する月
+          <FormInput
+            type="month"
+            min="0001-01"
+            max={form.currentMonth}
+            value={form.month}
+            onChange={(event) => form.changeMonth(event.target.value)}
+            disabled={form.saving || form.copying}
+          />
+        </MonthField>
+      )}
       <Summary>
         <Note>{form.monthLabel}</Note>
         <strong>
-          {props.budget === null
-            ? '予算はまだありません'
-            : yen.format(props.budget)}
+          {form.loading
+            ? '読み込み中...'
+            : form.loadError
+              ? '取得できませんでした'
+              : form.budget === null
+                ? '予算はまだありません'
+                : yen.format(form.budget)}
         </strong>
       </Summary>
+      {form.loadError && (
+        <Error role="alert">
+          {form.loadError}
+          <TextAction type="button" onClick={form.retry}>
+            再読み込み
+          </TextAction>
+        </Error>
+      )}
       <Form onSubmit={form.submit}>
         <label htmlFor="monthly-budget-amount">
-          {props.budget === null ? '予算額' : '新しい予算'}
+          {form.budget === null ? '予算額' : '新しい予算'}
         </label>
         <FormInput
           id="monthly-budget-amount"
@@ -44,7 +69,7 @@ export const BudgetEditSheet = (props: BudgetFormProps) => {
           autoComplete="off"
           placeholder="金額を入力"
           value={form.amount}
-          disabled={form.busy}
+          disabled={form.busy || !!form.loadError}
           onChange={(event) => form.changeAmount(event.target.value)}
           aria-invalid={!!form.error}
           aria-describedby={form.error ? 'budget-error' : undefined}
@@ -61,7 +86,7 @@ export const BudgetEditSheet = (props: BudgetFormProps) => {
       <TextAction
         type="button"
         onClick={form.copyPrevious}
-        disabled={form.busy}
+        disabled={form.busy || !!form.loadError}
       >
         {form.copying ? '読み込み中...' : '先月の予算額を入力'}
       </TextAction>
@@ -80,6 +105,14 @@ const Header = styled.div`
     margin: 0;
     font-size: 24px;
   }
+`;
+const MonthField = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${colors.textSecondary};
 `;
 const Close = styled.button`
   padding: 8px;
