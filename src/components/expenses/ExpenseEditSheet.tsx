@@ -1,18 +1,12 @@
-﻿import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useExpenseEdit } from '../../hooks/expenses/useExpenseEdit';
 import styled from 'styled-components';
-import { expenseSchema, type ExpenseFormValues } from '../../constants/expense';
 import type { ExpenseContent } from '../../util/expense';
-import { expenseRepository } from '../../repositories/expenseRepository';
-import { useCategories } from '../../hooks/category/useCategories';
 import { BottomSheet } from '../ui/BottomSheet';
 import { PrimaryButton, TextAction } from '../ui/FormControls';
 import { AmountField } from './AmountField';
 import { CategoryField } from './CategoryField';
 import { MemoField } from './MemoField';
 import { DateTimeField } from './DateTimeField';
-import { getTodayJST } from '../../util/date';
 import { colors } from '../../theme/palette';
 
 type Props = {
@@ -21,61 +15,34 @@ type Props = {
   onSaved: (message: string) => void;
 };
 export const ExpenseEditSheet = ({ expense, onClose, onSaved }: Props) => {
-  const { categories, loading, error: categoryError } = useCategories();
-  const [error, setError] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const form = useForm<ExpenseFormValues>({
-    resolver: zodResolver(expenseSchema),
-    defaultValues: {
-      amount: expense.amount,
-      categoryId: expense.category.id,
-      memo: expense.memo ?? '',
-      expenseDate: expense.expenseDate,
-      expenseTime: expense.expenseTime?.slice(0, 5) ?? null,
-    },
-  });
   const {
     register,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = form;
-  const busy = isSubmitting || deleting;
-  const options = categories.some((item) => item.id === expense.category.id)
-    ? categories
-    : [...categories, { ...expense.category, isSystem: false }];
-  const save = form.handleSubmit(async (values) => {
-    setError('');
-    try {
-      await expenseRepository.update(expense.id, {
-        ...values,
-        memo: values.memo.trim() || null,
-      });
-      onSaved('支出を更新しました');
-    } catch {
-      setError('保存に失敗しました。もう一度お試しください。');
-    }
-  });
-  const remove = async () => {
-    setDeleting(true);
-    setError('');
-    try {
-      await expenseRepository.remove(expense.id);
-      onSaved('支出を削除しました');
-    } catch {
-      setError('削除に失敗しました。もう一度お試しください。');
-    } finally {
-      setDeleting(false);
-    }
-  };
+    errors,
+    busy,
+    options,
+    save,
+    remove,
+    close,
+    selectCategory,
+    enableDate,
+    changeDate,
+    changeTime,
+    clearDate,
+    requestDelete,
+    cancelDelete,
+    confirmDelete,
+    deleting,
+    error,
+    categoryError,
+    isSubmitting,
+    selectedCategoryId,
+    date,
+    time,
+    saveDisabled,
+  } = useExpenseEdit({ expense, onClose, onSaved });
+
   return (
-    <BottomSheet
-      title="支出を編集"
-      onClose={() => {
-        if (!busy) onClose();
-      }}
-    >
+    <BottomSheet title="支出を編集" onClose={close}>
       {confirmDelete ? (
         <>
           <h2>この支出を削除しますか？</h2>
@@ -83,16 +50,13 @@ export const ExpenseEditSheet = ({ expense, onClose, onSaved }: Props) => {
           <Danger type="button" disabled={busy} onClick={() => void remove()}>
             {deleting ? '削除中...' : '削除する'}
           </Danger>
-          <PrimaryButton
-            disabled={busy}
-            onClick={() => setConfirmDelete(false)}
-          >
+          <PrimaryButton disabled={busy} onClick={cancelDelete}>
             キャンセル
           </PrimaryButton>
         </>
       ) : (
         <>
-          <TextAction onClick={onClose} disabled={busy}>
+          <TextAction onClick={close} disabled={busy}>
             ‹ 履歴に戻る
           </TextAction>
           <h2>支出を編集</h2>
@@ -101,47 +65,25 @@ export const ExpenseEditSheet = ({ expense, onClose, onSaved }: Props) => {
               <AmountField register={register} errors={errors} />
               <CategoryField
                 categories={options}
-                selectedId={watch('categoryId')}
-                onSelect={(id) =>
-                  setValue('categoryId', id, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
+                selectedId={selectedCategoryId}
+                onSelect={selectCategory}
               />
               {categoryError && <Message role="alert">{categoryError}</Message>}
               <MemoField register={register} errors={errors} />
               <DateTimeField
-                expanded={!!watch('expenseDate')}
-                date={watch('expenseDate')}
-                time={watch('expenseTime')}
+                expanded={!!date}
+                date={date}
+                time={time}
                 errors={errors}
-                onExpand={() => setValue('expenseDate', getTodayJST())}
-                onDateChange={(value) => {
-                  setValue('expenseDate', value, { shouldValidate: true });
-                  if (!value) setValue('expenseTime', null);
-                }}
-                onTimeChange={(value) =>
-                  setValue('expenseTime', value, { shouldValidate: true })
-                }
-                onClear={() => {
-                  setValue('expenseDate', null);
-                  setValue('expenseTime', null);
-                }}
+                onExpand={enableDate}
+                onDateChange={changeDate}
+                onTimeChange={changeTime}
+                onClear={clearDate}
               />
-              <PrimaryButton
-                type="submit"
-                disabled={busy || loading || !!categoryError}
-              >
+              <PrimaryButton type="submit" disabled={saveDisabled}>
                 {isSubmitting ? '保存中...' : '変更を保存'}
               </PrimaryButton>
-              <Danger
-                type="button"
-                onClick={() => {
-                  setError('');
-                  setConfirmDelete(true);
-                }}
-              >
+              <Danger type="button" onClick={requestDelete}>
                 この支出を削除
               </Danger>
             </fieldset>

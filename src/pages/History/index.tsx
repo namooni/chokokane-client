@@ -1,72 +1,57 @@
-﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { useHistory } from '../../hooks/expenses/useHistory';
-import { expenseMonth, sortHistory } from '../../util/history';
-import { getTodayJST } from '../../util/date';
-import { yen, type ExpenseContent } from '../../util/expense';
+import { useHistoryPage } from '../../hooks/expenses/useHistoryPage';
+import { yen } from '../../util/expense';
 import { colors } from '../../theme/palette';
 import { ExpenseEditSheet } from '../../components/expenses/ExpenseEditSheet';
 
 const HistoryPage = () => {
-  const { items, loading, error, reload } = useHistory();
-  const [month, setMonth] = useState(() => getTodayJST().slice(0, 7));
-  const [filter, setFilter] = useState('all');
-  const [limit, setLimit] = useState(20);
-  const [editing, setEditing] = useState<ExpenseContent | null>(null);
-  const [toast, setToast] = useState('');
-  const monthly = sortHistory(
-    items.filter((item) => expenseMonth(item) === month),
-  );
-  const categories = [
-    ...new Map(
-      monthly.map((item) => [item.category.id, item.category]),
-    ).values(),
-  ];
-  const effective =
-    filter === 'all' ||
-    filter === 'undated' ||
-    categories.some((item) => String(item.id) === filter)
-      ? filter
-      : 'all';
-  const filtered = monthly.filter(
-    (item) =>
-      effective === 'all' ||
-      (effective === 'undated'
-        ? !item.expenseDate
-        : String(item.category.id) === effective),
-  );
-  const groups = new Map<string, ExpenseContent[]>();
-  filtered.slice(0, limit).forEach((item) => {
-    const key = item.expenseDate ?? 'undated';
-    groups.set(key, [...(groups.get(key) ?? []), item]);
-  });
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-  useEffect(() => {
-    if (!loading) setFilter(effective);
-  }, [effective, loading]);
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(''), 3000);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
-  const move = (offset: number) => {
-    const [year, number] = month.split('-').map(Number);
-    setMonth(
-      new Date(Date.UTC(year, number - 1 + offset, 1))
-        .toISOString()
-        .slice(0, 7),
-    );
-    setLimit(20);
-  };
-  const [year, number] = month.split('-').map(Number);
+  const {
+    loading,
+    error,
+    reload,
+    year,
+    number,
+    move,
+    effective,
+    filterOptions,
+    selectFilter,
+    monthlyTotal,
+    filteredTotal,
+    hasMonthly,
+    filteredCount,
+    groups,
+    hasMore,
+    showMore,
+    editing,
+    startEdit,
+    closeEdit,
+    onSaved,
+    toast,
+    dismissToast,
+    isCurrentMonth,
+    canMoveNext,
+  } = useHistoryPage();
+
   return (
     <Page>
       <MonthNav aria-label="表示する月">
         <Arrow onClick={() => move(-1)} aria-label="前の月">
-          ‹
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m14 6-6 6 6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </Arrow>
         <strong>
           {year}年{number}月
@@ -74,9 +59,23 @@ const HistoryPage = () => {
         <Arrow
           onClick={() => move(1)}
           aria-label="次の月"
-          disabled={month >= getTodayJST().slice(0, 7)}
+          disabled={!canMoveNext}
         >
-          ›
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m10 6 6 6-6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </Arrow>
       </MonthNav>
       {loading ? (
@@ -90,32 +89,20 @@ const HistoryPage = () => {
         <>
           <Summary>
             <Muted>
-              {month === getTodayJST().slice(0, 7) ? '今月' : `${number}月`}
+              {isCurrentMonth ? '今月' : `${number}月`}
               の支出合計
             </Muted>
-            <Total>
-              {yen.format(monthly.reduce((sum, item) => sum + item.amount, 0))}
-            </Total>
+            <Total>{yen.format(monthlyTotal)}</Total>
             <Muted>すべての支出を含む合計</Muted>
           </Summary>
-          {!!monthly.length && (
+          {hasMonthly && (
             <Filters aria-label="支出の絞り込み">
-              {[
-                { id: 'all', name: 'すべて' },
-                ...categories.map((item) => ({
-                  id: String(item.id),
-                  name: item.name,
-                })),
-                { id: 'undated', name: '日付未設定' },
-              ].map((item) => (
+              {filterOptions.map((item) => (
                 <Chip
                   key={item.id}
                   $active={effective === item.id}
                   aria-pressed={effective === item.id}
-                  onClick={() => {
-                    setFilter(item.id);
-                    setLimit(20);
-                  }}
+                  onClick={() => selectFilter(item.id)}
                 >
                   {item.name}
                 </Chip>
@@ -124,31 +111,30 @@ const HistoryPage = () => {
           )}
           {effective !== 'all' && (
             <Muted>
-              {filtered.length}件 · 合計{' '}
-              {yen.format(filtered.reduce((sum, item) => sum + item.amount, 0))}
+              {filteredCount}件 · 合計 {yen.format(filteredTotal)}
             </Muted>
           )}
-          {!filtered.length ? (
+          {!filteredCount ? (
             <State>
               <EmptyIcon aria-hidden="true">◇</EmptyIcon>
               <strong>
-                {monthly.length
+                {hasMonthly
                   ? '条件に一致する支出がありません。'
                   : 'この月の支出はまだありません。'}
               </strong>
               <p>
-                {monthly.length
+                {hasMonthly
                   ? 'ほかのカテゴリーを選んでください。'
                   : '最初の支出を記録してみましょう。'}
               </p>
-              {monthly.length ? (
-                <Chip onClick={() => setFilter('all')}>すべて表示</Chip>
+              {hasMonthly ? (
+                <Chip onClick={() => selectFilter('all')}>すべて表示</Chip>
               ) : (
                 <AddLink to="/add">＋ 支出を記録</AddLink>
               )}
             </State>
           ) : (
-            [...groups].map(([date, expenses]) => (
+            groups.map(([date, expenses]) => (
               <section key={date}>
                 <DateHeading>
                   {date === 'undated'
@@ -159,7 +145,7 @@ const HistoryPage = () => {
                   {expenses.map((item) => (
                     <Row
                       key={item.id}
-                      onClick={() => setEditing(item)}
+                      onClick={() => startEdit(item)}
                       aria-label={`${item.memo || item.category.name}、${yen.format(item.amount)}を編集`}
                     >
                       <Icon $color={item.category.color}>
@@ -181,27 +167,18 @@ const HistoryPage = () => {
               </section>
             ))
           )}
-          {filtered.length > limit && (
-            <Chip onClick={() => setLimit((value) => value + 20)}>
-              もっと見る
-            </Chip>
-          )}
+          {hasMore && <Chip onClick={showMore}>もっと見る</Chip>}
         </>
       )}
       {editing && (
         <ExpenseEditSheet
           expense={editing}
-          onClose={() => setEditing(null)}
-          onSaved={(message) => {
-            setEditing(null);
-            setToast(message);
-            setLimit(20);
-            reload();
-          }}
+          onClose={closeEdit}
+          onSaved={onSaved}
         />
       )}
       {toast && (
-        <Toast role="status" onClick={() => setToast('')}>
+        <Toast role="status" onClick={dismissToast}>
           {toast}
         </Toast>
       )}
@@ -220,8 +197,20 @@ const MonthNav = styled.nav`
   justify-content: center;
   align-items: center;
   gap: 8px;
+  > strong {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    line-height: 1;
+  }
 `;
 const Arrow = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
   border: 0;
   background: transparent;
   color: ${colors.textMuted};

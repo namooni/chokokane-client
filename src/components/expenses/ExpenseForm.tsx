@@ -1,48 +1,41 @@
-import type { FormEvent } from 'react';
-import { useState } from 'react';
 import styled from 'styled-components';
 import { AmountField } from './AmountField';
 import { CategoryField } from './CategoryField';
 import { MemoField } from './MemoField';
 import { DateTimeField } from './DateTimeField';
-import { useExpenseForm } from '../../hooks/expenses/useExpenseForm';
+import { useAddExpense } from '../../hooks/expenses/useAddExpense';
 import { Text } from '../Text';
 import { PrimaryButton } from '../ui/FormControls';
 import { QuickCategorySheet } from '../categories/QuickCategorySheet';
 import { colors } from '../../theme/palette';
-import { useCategories } from '../../hooks/category/useCategories';
 import { CategoryManageSheet } from '../categories/CategoryManageSheet';
 
 export const ExpenseForm = () => {
   const {
     categories,
     loading,
-    error: categoryError,
+    categoryError,
     createCategory,
     updateCategory,
     deleteCategory,
-  } = useCategories();
-  const defaultCategoryId =
-    categories.find((item) => item.name === '未分類')?.id ?? 0;
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
-  const expense = useExpenseForm(defaultCategoryId);
-  const { form, submit } = expense;
-  const {
+    sheetOpen,
+    setSheetOpen,
+    manageOpen,
+    setManageOpen,
+    expense,
     register,
-    formState: { errors, isSubmitting },
+    errors,
+    isSubmitting,
     watch,
-  } = form;
-  const amount = watch('amount');
-
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    console.log({ event });
-    void submit(event);
-  };
+    submit,
+    saveDisabled,
+    onCreated,
+    onDeleted,
+  } = useAddExpense();
 
   return (
     <>
-      <Form onSubmit={onSubmit}>
+      <Form onSubmit={submit}>
         <AmountField register={register} errors={errors} />
         {categoryError && (
           <Text variant="caption" tone="danger">
@@ -72,20 +65,7 @@ export const ExpenseForm = () => {
           onTimeChange={expense.changeTime}
           onClear={expense.disableDate}
         />
-        <PrimaryButton
-          type="submit"
-          disabled={
-            isSubmitting ||
-            !Number.isFinite(amount) ||
-            amount <= 0 ||
-            loading ||
-            !!categoryError ||
-            defaultCategoryId === 0 ||
-            !categories.some(
-              (category) => category.id === expense.selectedCategoryId,
-            )
-          }
-        >
+        <PrimaryButton type="submit" disabled={saveDisabled}>
           {isSubmitting ? '保存中...' : '支出を記録する'}
         </PrimaryButton>
         {expense.submitError && (
@@ -103,10 +83,7 @@ export const ExpenseForm = () => {
         <QuickCategorySheet
           onClose={() => setSheetOpen(false)}
           onCreate={createCategory}
-          onCreated={(category) => {
-            expense.selectCategory(category.id);
-            setSheetOpen(false);
-          }}
+          onCreated={onCreated}
         />
       )}
       {manageOpen && (
@@ -115,11 +92,7 @@ export const ExpenseForm = () => {
           onClose={() => setManageOpen(false)}
           onDelete={deleteCategory}
           onUpdate={updateCategory}
-          onDeleted={(categoryId) => {
-            if (expense.selectedCategoryId === categoryId) {
-              expense.selectCategory(defaultCategoryId);
-            }
-          }}
+          onDeleted={onDeleted}
         />
       )}
     </>
