@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useCategoryEdit } from '../../hooks/category/useCategoryEdit';
 import styled from 'styled-components';
 import {
   categoryColors,
-  normalizeCategoryName,
   type Category,
   type UpdateCategoryInput,
 } from '../../constants/category';
@@ -27,40 +26,17 @@ export const CategoryEditSheet = ({
   onUpdate,
   onUpdated,
 }: Props) => {
-  const [name, setName] = useState(category.name);
-  const [color, setColor] = useState(category.color);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  const normalizedName = normalizeCategoryName(name);
-
-  const unchanged =
-    normalizedName === category.name && color === category.color;
-
-  const handleSubmit = async () => {
-    if (saving || unchanged || !normalizedName) return;
-
-    setSaving(true);
-    setError('');
-
-    try {
-      await onUpdate(
-        {
-          name: normalizedName,
-          color,
-        },
-        category.id,
-      );
-
-      onUpdated();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'カテゴリーを変更できませんでした',
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+  const {
+    name,
+    setName,
+    color,
+    setColor,
+    saving,
+    error,
+    normalizedName,
+    unchanged,
+    handleSubmit,
+  } = useCategoryEdit({ category, onUpdate, onUpdated });
 
   return (
     <BottomSheet title="カテゴリーを編集" onClose={onClose}>

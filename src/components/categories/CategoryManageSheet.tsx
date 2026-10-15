@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCategoryManage } from '../../hooks/category/useCategoryManage';
 import styled from 'styled-components';
 import type { Category, UpdateCategoryInput } from '../../constants/category';
 import { BottomSheet } from '../ui/BottomSheet';
@@ -24,27 +24,17 @@ export const CategoryManageSheet = ({
   onDeleted,
   onUpdate,
 }: Props) => {
-  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
-  const [editTarget, setEditTarget] = useState<Category | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleDelete = async () => {
-    if (!deleteTarget || deleting) return;
-
-    setDeleting(true);
-    setError('');
-
-    try {
-      await onDelete(deleteTarget.id);
-      onDeleted(deleteTarget.id);
-      setDeleteTarget(null);
-    } catch {
-      setError('カテゴリーを削除できませんでした');
-    } finally {
-      setDeleting(false);
-    }
-  };
+  const {
+    deleteTarget,
+    setDeleteTarget,
+    editTarget,
+    setEditTarget,
+    deleting,
+    error,
+    handleDelete,
+    startEdit,
+    requestDelete,
+  } = useCategoryManage({ onDelete, onDeleted });
 
   if (editTarget) {
     return (
@@ -78,11 +68,7 @@ export const CategoryManageSheet = ({
               <EditButton
                 type="button"
                 disabled={deleting}
-                onClick={() => {
-                  setError('');
-                  setDeleteTarget(null);
-                  setEditTarget(category);
-                }}
+                onClick={() => startEdit(category)}
               >
                 編集
               </EditButton>
@@ -90,10 +76,7 @@ export const CategoryManageSheet = ({
               <DeleteButton
                 type="button"
                 disabled={deleting}
-                onClick={() => {
-                  setError('');
-                  setDeleteTarget(category);
-                }}
+                onClick={() => requestDelete(category)}
               >
                 削除
               </DeleteButton>

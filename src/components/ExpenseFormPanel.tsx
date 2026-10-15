@@ -1,6 +1,7 @@
 import { SubmitEvent } from 'react';
 import styled from 'styled-components';
-import { categories, ExpenseRequest } from '../util/expense';
+import type { ExpenseRequest } from '../util/expense';
+import { useExpenseFormPanel } from '../hooks/expenses/useExpenseFormPanel';
 import CustomDatePicker from './Input/CustomDatePicker';
 import SelectInput from './Input/SelectInput';
 
@@ -19,30 +20,14 @@ export const ExpenseFormPanel = ({
   onSubmit,
   onCancel,
 }: ExpenseFormPanelProps) => {
-  const dateEnabled = Boolean(form.expenseDate);
-
-  const toggleDate = (enabled: boolean) => {
-    if (enabled) {
-      const now = new Date();
-      const today = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, '0'),
-        String(now.getDate()).padStart(2, '0'),
-      ].join('-');
-      onChange({ ...form, expenseDate: today });
-      return;
-    }
-
-    if (editingId !== null) {
-      onChange({ ...form, expenseDate: null, expenseTime: null });
-      return;
-    }
-
-    const nextForm = { ...form };
-    delete nextForm.expenseDate;
-    delete nextForm.expenseTime;
-    onChange(nextForm);
-  };
+  const {
+    categories,
+    loading,
+    error,
+    dateEnabled,
+    toggleDate,
+    selectCategory,
+  } = useExpenseFormPanel({ editingId, form, onChange });
 
   return (
     <FormCard>
@@ -108,22 +93,25 @@ export const ExpenseFormPanel = ({
         <Field>
           カテゴリ
           <SelectInput
-            value={form.category}
-            onChange={(event) =>
-              onChange({ ...form, category: event.target.value })
-            }
+            value={String(form.categoryId)}
+            disabled={loading || !!error}
+            onChange={(event) => selectCategory(event.target.value)}
           >
+            <option value={0} disabled>
+              カテゴリーを選択
+            </option>
             {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
+              <option key={item.id} value={item.id}>
+                {item.name}
               </option>
             ))}
           </SelectInput>
+          {error && <span role="alert">{error}</span>}
         </Field>
         <Field>
           メモ
           <TextInput
-            value={form.memo}
+            value={form.memo ?? ''}
             placeholder="何に使いましたか？"
             onChange={(event) =>
               onChange({ ...form, memo: event.target.value })

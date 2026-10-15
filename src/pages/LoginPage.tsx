@@ -1,5 +1,4 @@
-﻿import { FormEvent, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import {
   Page,
   Topbar,
@@ -20,46 +19,21 @@ import {
   ActionLink as SignupLink,
   Footer,
 } from './authStyles';
-import { useAuth } from '../auth/AuthContext';
+import { useLoginForm } from '../hooks/auth/useLoginForm';
 
 export const LoginPage = () => {
-  const { login, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const signupComplete = location.state?.signupComplete === true;
-  const initialEmail =
-    typeof location.state?.email === 'string' ? location.state.email : '';
-  const [email, setEmail] = useState(initialEmail);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const requestedPath = location.state?.from?.pathname;
-  const returnTo =
-    typeof requestedPath === 'string' &&
-    requestedPath.startsWith('/') &&
-    !requestedPath.startsWith('//')
-      ? requestedPath
-      : '/home';
-
-  if (isAuthenticated) {
-    return <Navigate to="/home" replace />;
-  }
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError('');
-    setSubmitting(true);
-    try {
-      await login({ email, password });
-      navigate(returnTo, { replace: true });
-    } catch {
-      setError(
-        'ログインできませんでした。メールアドレスとパスワードをご確認ください。',
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    error,
+    submitting,
+    signupComplete,
+    isAuthenticated,
+    submit,
+  } = useLoginForm();
+  if (isAuthenticated) return <Navigate to="/home" replace />;
 
   return (
     <Page>

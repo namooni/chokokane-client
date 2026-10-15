@@ -1,20 +1,12 @@
+import { useExpenseOverview } from '../hooks/expenses/useExpenseOverview';
 import styled from 'styled-components';
 import { Expense, yen } from '../util/expense';
 
 type ExpenseOverviewProps = { expenses: Expense };
 
 export const ExpenseOverview = ({ expenses }: ExpenseOverviewProps) => {
-  const { content, totalAmount } = expenses;
-  const categoryTotals = content.reduce<Record<string, number>>(
-    (totals, expense) => {
-      totals[expense.category] =
-        (totals[expense.category] ?? 0) + expense.amount;
-      return totals;
-    },
-    {},
-  );
-  const topCategory =
-    Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '-';
+  const { totalAmount, totalElements, topCategory } =
+    useExpenseOverview(expenses);
 
   return (
     <>
@@ -33,7 +25,7 @@ export const ExpenseOverview = ({ expenses }: ExpenseOverviewProps) => {
         <HeroCard>
           <HeroCardLabel>Total spending</HeroCardLabel>
           <HeroCardValue>{yen.format(totalAmount)}</HeroCardValue>
-          <HeroCardMeta>{expenses.totalElements} transactions</HeroCardMeta>
+          <HeroCardMeta>{totalElements} transactions</HeroCardMeta>
         </HeroCard>
       </Hero>
       <Stats>
@@ -44,7 +36,7 @@ export const ExpenseOverview = ({ expenses }: ExpenseOverviewProps) => {
         <Stat>
           <StatLabel>支出件数</StatLabel>
           <StatValue>
-            {expenses.totalElements}
+            {totalElements}
             <StatUnit>件</StatUnit>
           </StatValue>
         </Stat>
