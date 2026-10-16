@@ -9,7 +9,8 @@ import { api } from '../apis/apiClient';
 import { clearTokens, getAccessToken, saveAccessToken } from './tokenStorage';
 
 type LoginCredentials = { email: string; password: string };
-type LoginNotice = { reason: 'passwordChanged'; email?: string };
+type LoginNotice =
+  { reason: 'passwordChanged'; email?: string } | { reason: 'accountDeleted' };
 type AuthContextValue = {
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;

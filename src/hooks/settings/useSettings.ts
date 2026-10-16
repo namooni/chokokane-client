@@ -24,7 +24,12 @@ export const useSettings = () => {
   const [budgetError, setBudgetError] = useState('');
   const [revision, setRevision] = useState(0);
   const [sheet, setSheet] = useState<
-    'budget' | 'categories' | 'createCategory' | 'password' | null
+    | 'budget'
+    | 'categories'
+    | 'createCategory'
+    | 'password'
+    | 'deleteAccount'
+    | null
   >(null);
   const [toast, setToast] = useState('');
   const category = useCategories();
@@ -126,6 +131,7 @@ export const useSettings = () => {
     },
     sheet,
     openPassword: () => setSheet('password'),
+    openDeleteAccount: () => setSheet('deleteAccount'),
     closeSheet: () => setSheet(null),
     openCategories: () => {
       if (!category.loading && !category.error) setSheet('categories');

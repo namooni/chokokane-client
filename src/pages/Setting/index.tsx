@@ -7,6 +7,7 @@ import { BudgetEditSheet } from '../../components/budget/BudgetEditSheet';
 import { CategoryManageSheet } from '../../components/categories/CategoryManageSheet';
 import { QuickCategorySheet } from '../../components/categories/QuickCategorySheet';
 import { ChangePasswordSheet } from '../../components/settings/ChangePasswordSheet';
+import { DeleteAccountSheet } from '../../components/settings/DeleteAccountSheet';
 
 const SettingPage = () => {
   const settings = useSettings();
@@ -114,7 +115,17 @@ const SettingPage = () => {
           {loggingOut ? 'ログアウト中...' : 'ログアウト'}
         </LogoutButton>
         {error && <Error role="alert">{error}</Error>}
+        <DeleteAccountButton
+          type="button"
+          onClick={settings.openDeleteAccount}
+          disabled={loggingOut}
+        >
+          退会する
+        </DeleteAccountButton>
       </Section>
+      {settings.sheet === 'deleteAccount' && (
+        <DeleteAccountSheet onClose={settings.closeSheet} />
+      )}
       {settings.sheet === 'password' && (
         <ChangePasswordSheet
           onClose={settings.closeSheet}
@@ -163,6 +174,20 @@ const Page = styled.div`
   flex-direction: column;
   gap: 24px;
   padding-top: 24px;
+`;
+const DeleteAccountButton = styled.button`
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: ${colors.danger};
+  font-size: 13px;
+  cursor: pointer;
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
 `;
 const Management = styled.section`
   display: flex;

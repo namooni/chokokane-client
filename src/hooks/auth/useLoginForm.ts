@@ -8,14 +8,18 @@ export const useLoginForm = () => {
   const location = useLocation();
   const signupComplete = location.state?.signupComplete === true;
   const successMessage =
-    loginNotice?.reason === 'passwordChanged' ||
-    location.state?.passwordChanged === true
-      ? 'パスワードを変更しました。新しいパスワードでログインしてください。'
-      : signupComplete
-        ? 'アカウントを作成しました。ログインしてください。'
-        : '';
+    loginNotice?.reason === 'accountDeleted'
+      ? '退会が完了しました。ご利用ありがとうございました。'
+      : loginNotice?.reason === 'passwordChanged' ||
+          location.state?.passwordChanged === true
+        ? 'パスワードを変更しました。新しいパスワードでログインしてください。'
+        : signupComplete
+          ? 'アカウントを作成しました。ログインしてください。'
+          : '';
   const initialEmail =
-    loginNotice?.email ??
+    (loginNotice?.reason === 'passwordChanged'
+      ? loginNotice.email
+      : undefined) ??
     (typeof location.state?.email === 'string' ? location.state.email : '');
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
