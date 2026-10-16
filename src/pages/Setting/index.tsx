@@ -6,6 +6,8 @@ import { yen } from '../../util/expense';
 import { BudgetEditSheet } from '../../components/budget/BudgetEditSheet';
 import { CategoryManageSheet } from '../../components/categories/CategoryManageSheet';
 import { QuickCategorySheet } from '../../components/categories/QuickCategorySheet';
+import { ChangePasswordSheet } from '../../components/settings/ChangePasswordSheet';
+import { DeleteAccountSheet } from '../../components/settings/DeleteAccountSheet';
 
 const SettingPage = () => {
   const settings = useSettings();
@@ -75,6 +77,34 @@ const SettingPage = () => {
       </Management>
       <Section aria-labelledby="account-heading">
         <Heading id="account-heading">アカウント</Heading>
+        <EmailDetails>
+          <dt>メールアドレス</dt>
+          <dd>
+            {settings.userLoading ? (
+              <span role="status">読み込み中...</span>
+            ) : settings.userError ? (
+              <>
+                <ErrorText role="alert">{settings.userError}</ErrorText>
+                <Retry
+                  type="button"
+                  onClick={settings.retryUser}
+                  disabled={loggingOut}
+                >
+                  再読み込み
+                </Retry>
+              </>
+            ) : (
+              settings.user?.email
+            )}
+          </dd>
+        </EmailDetails>
+        <PasswordButton
+          type="button"
+          onClick={settings.openPassword}
+          disabled={loggingOut}
+        >
+          パスワード変更 <Chevron aria-hidden="true">›</Chevron>
+        </PasswordButton>
         <Description>この端末からログアウトします。</Description>
         <LogoutButton
           type="button"
@@ -85,7 +115,23 @@ const SettingPage = () => {
           {loggingOut ? 'ログアウト中...' : 'ログアウト'}
         </LogoutButton>
         {error && <Error role="alert">{error}</Error>}
+        <DeleteAccountButton
+          type="button"
+          onClick={settings.openDeleteAccount}
+          disabled={loggingOut}
+        >
+          退会する
+        </DeleteAccountButton>
       </Section>
+      {settings.sheet === 'deleteAccount' && (
+        <DeleteAccountSheet onClose={settings.closeSheet} />
+      )}
+      {settings.sheet === 'password' && (
+        <ChangePasswordSheet
+          onClose={settings.closeSheet}
+          email={settings.user?.email}
+        />
+      )}
       {settings.sheet === 'budget' && (
         <BudgetEditSheet
           allowMonthChange
@@ -128,6 +174,20 @@ const Page = styled.div`
   flex-direction: column;
   gap: 24px;
   padding-top: 24px;
+`;
+const DeleteAccountButton = styled.button`
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: ${colors.danger};
+  font-size: 13px;
+  cursor: pointer;
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
 `;
 const Management = styled.section`
   display: flex;
@@ -225,10 +285,47 @@ const Heading = styled.h2`
   font-size: 16px;
   color: ${colors.text};
 `;
+const PasswordButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 0 12px;
+  border: 0;
+  border-bottom: 1px solid ${colors.borderSubtle};
+  background: transparent;
+  color: ${colors.text};
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+`;
 const Description = styled.p`
   margin: 0;
   font-size: 13px;
   color: ${colors.textMuted};
+`;
+const EmailDetails = styled.dl`
+  margin: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${colors.borderSubtle};
+  dt {
+    font-size: 13px;
+    color: ${colors.textSecondary};
+  }
+  dd {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: ${colors.textMuted};
+    overflow-wrap: anywhere;
+    line-height: 1.7;
+  }
+`;
+const ErrorText = styled.span`
+  color: ${colors.danger};
 `;
 const LogoutButton = styled(PrimaryButton)`
   background: ${colors.dangerSoft};
