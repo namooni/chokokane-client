@@ -3,12 +3,20 @@ import { useAuth } from '../../auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 export const useLoginForm = () => {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, loginNotice } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const signupComplete = location.state?.signupComplete === true;
+  const successMessage =
+    loginNotice?.reason === 'passwordChanged' ||
+    location.state?.passwordChanged === true
+      ? 'パスワードを変更しました。新しいパスワードでログインしてください。'
+      : signupComplete
+        ? 'アカウントを作成しました。ログインしてください。'
+        : '';
   const initialEmail =
-    typeof location.state?.email === 'string' ? location.state.email : '';
+    loginNotice?.email ??
+    (typeof location.state?.email === 'string' ? location.state.email : '');
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -66,7 +74,7 @@ export const useLoginForm = () => {
     setPassword,
     error,
     submitting,
-    signupComplete,
+    successMessage,
     isAuthenticated,
     submit,
   };
