@@ -6,6 +6,7 @@ import { dashboardApi } from '../../apis/dashboard/dashboardApi';
 import { useCategories } from '../category/useCategories';
 import { getTodayJST } from '../../util/date';
 import type { Category, UpdateCategoryInput } from '../../constants/category';
+import { userApi, type CurrentUser } from '../../apis/user/userApi';
 
 export const useSettings = () => {
   const { logout } = useAuth();
@@ -13,16 +14,39 @@ export const useSettings = () => {
   const pending = useRef(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState('');
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+  const [userError, setUserError] = useState('');
+  const [userRevision, setUserRevision] = useState(0);
   const [month] = useState(() => getTodayJST().slice(0, 7));
   const [budget, setBudget] = useState<number | null>(null);
   const [budgetLoading, setBudgetLoading] = useState(true);
   const [budgetError, setBudgetError] = useState('');
   const [revision, setRevision] = useState(0);
   const [sheet, setSheet] = useState<
-    'budget' | 'categories' | 'createCategory' | null
+    'budget' | 'categories' | 'createCategory' | 'password' | null
   >(null);
   const [toast, setToast] = useState('');
   const category = useCategories();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setUserLoading(true);
+    setUserError('');
+    userApi
+      .getMe(controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted) setUser(result);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setUserError('アカウント情報を読み込めませんでした。');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setUserLoading(false);
+      });
+    return () => controller.abort();
+  }, [userRevision]);
 
   useEffect(() => {
     let active = true;
@@ -78,6 +102,10 @@ export const useSettings = () => {
 
   const [year, number] = month.split('-').map(Number);
   return {
+    user,
+    userLoading,
+    userError,
+    retryUser: () => setUserRevision((value) => value + 1),
     loggingOut,
     error,
     handleLogout,
@@ -97,6 +125,7 @@ export const useSettings = () => {
       setToast('予算を保存しました');
     },
     sheet,
+    openPassword: () => setSheet('password'),
     closeSheet: () => setSheet(null),
     openCategories: () => {
       if (!category.loading && !category.error) setSheet('categories');

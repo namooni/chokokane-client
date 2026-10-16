@@ -29,7 +29,7 @@ export const LoginPage = () => {
     setPassword,
     error,
     submitting,
-    signupComplete,
+    successMessage,
     isAuthenticated,
     submit,
   } = useLoginForm();
@@ -51,9 +51,9 @@ export const LoginPage = () => {
           <p>ログインして、あなたの家計簿を続けましょう。</p>
         </LoginIntro>
         <LoginForm onSubmit={submit}>
-          {signupComplete && (
+          {successMessage && (
             <Success role="status">
-              アカウントを作成しました。ログインしてください。
+              {successMessage}
             </Success>
           )}
           <Field>
