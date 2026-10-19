@@ -51,11 +51,7 @@ export const LoginPage = () => {
           <p>ログインして、あなたの家計簿を続けましょう。</p>
         </LoginIntro>
         <LoginForm onSubmit={submit}>
-          {successMessage && (
-            <Success role="status">
-              {successMessage}
-            </Success>
-          )}
+          {successMessage && <Success role="status">{successMessage}</Success>}
           <Field>
             メールアドレス
             <Input
@@ -83,6 +79,11 @@ export const LoginPage = () => {
           <SubmitButton type="submit" disabled={submitting}>
             {submitting ? 'ログイン中...' : 'ログイン'}
           </SubmitButton>
+          <PrivacyNote>
+            <SignupLink to="/forgot-password">
+              パスワードをお忘れの方
+            </SignupLink>
+          </PrivacyNote>
           <PrivacyNote>
             家計簿の内容はログイン後にのみ表示されます。
           </PrivacyNote>
