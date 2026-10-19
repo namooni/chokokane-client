@@ -4,6 +4,8 @@ import { ExpensePage } from '../pages/ExpensePage';
 import { LandingPage } from '../pages/LandingPage';
 import { LoginPage } from '../pages/LoginPage';
 import { SignupPage } from '../pages/SignupPage';
+import { ForgotPasswordPage } from '../pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '../pages/ResetPasswordPage';
 import NotFoundRedirect from './NotFoundRedirect';
 import HomePage from '../pages/Home';
 import AddPage from '../pages/Add';
@@ -21,6 +23,8 @@ export const AppRoutes = () => (
         <Route path={paths.LANDING} element={<LandingPage />} />
         <Route path={paths.LOGIN} element={<LoginPage />} />
         <Route path={paths.SIGN_UP} element={<SignupPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<AppFrame />}>
