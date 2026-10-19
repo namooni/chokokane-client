@@ -34,6 +34,15 @@ jobs:
             --name '/prod/chokokane/client/api-base-url' \
             --query 'Parameter.Value' \
             --output text)" >> "$GITHUB_ENV"
+          TURNSTILE_SITE_KEY=$(aws ssm get-parameter \
+            --name '/prod/chokokane/client/turnstile-site-key' \
+            --query 'Parameter.Value' \
+            --output text)
+          if [ -z "$TURNSTILE_SITE_KEY" ] || [ "$TURNSTILE_SITE_KEY" = "None" ] || [ "$TURNSTILE_SITE_KEY" = "1x00000000000000000000AA" ]; then
+            echo "A production Turnstile Site Key is required."
+            exit 1
+          fi
+          echo "VITE_TURNSTILE_SITE_KEY=$TURNSTILE_SITE_KEY" >> "$GITHUB_ENV"
 
       - name: Build production
         run: yarn build:prod

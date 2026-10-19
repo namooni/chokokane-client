@@ -3,6 +3,7 @@ import axios, {
   AxiosError,
   InternalAxiosRequestConfig,
 } from 'axios';
+import { isPublicAuthRequest } from '../util/auth';
 import {
   clearTokens,
   getAccessToken,
@@ -28,11 +29,6 @@ type RetriableRequestConfig = InternalAxiosRequestConfig & {
 };
 
 let refreshPromise: Promise<string> | null = null;
-
-const isPublicAuthRequest = (url: string = '') => {
-  const pathname = url.split(/[?#]/, 1)[0].replace(/\/+$/, '');
-  return /\/(login|signup|refresh)$/.test(pathname);
-};
 
 const refreshAccessToken = () => {
   if (!refreshPromise) {
